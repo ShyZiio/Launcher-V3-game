@@ -1,0 +1,28 @@
+name: Build MonLauncher
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer les dépendances
+        run: npm install
+
+      - name: Créer l'exe
+        run: npx electron-builder --win portable --publish never
+
+      - name: Publier l'exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: MonLauncher
+          path: dist/MonLauncher.exe
