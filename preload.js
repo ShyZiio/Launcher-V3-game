@@ -6,5 +6,7 @@ contextBridge.exposeInMainWorld('api', {
   launch: (game) => ipcRenderer.invoke('game:launch', game),
   scanAll: () => ipcRenderer.invoke('scan:all'),
   pickExe: () => ipcRenderer.invoke('pick:exe'),
-  addValorant: () => ipcRenderer.invoke('add:valorant')
+  pickImage: () => ipcRenderer.invoke('pick:image'),
+  addValorant: () => ipcRenderer.invoke('add:valorant'),
+  getMeta: (appid) => ipcRenderer.invoke('meta:get', appid)
 });
