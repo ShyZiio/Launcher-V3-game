@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://cdn.cloudflare.steamstatic.com">
+  <title>Mon Launcher</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>Ma bibliothèque</h1>
+      <p id="count"></p>
+    </div>
+    <div class="tools">
+      <input id="search" type="text" placeholder="Rechercher un jeu…" autocomplete="off">
+      <div class="dropdown">
+        <button id="addBtn" class="btn primary">+ Ajouter</button>
+        <div id="menu" class="menu hidden">
+          <button id="miImport">Importer Steam et Epic</button>
+          <button id="miValorant">Ajouter Valorant</button>
+          <button id="miExe">Ajouter un jeu (.exe)</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <nav id="filters" class="filters"></nav>
+
+  <main>
+    <section id="grid" class="grid"></section>
+    <section id="empty" class="empty hidden"></section>
+  </main>
+
+  <div id="modal" class="modal hidden">
+    <div class="box">
+      <h2>Nom du jeu</h2>
+      <input id="nameInput" type="text" autocomplete="off">
+      <div class="row">
+        <button id="nameCancel" class="btn ghost">Annuler</button>
+        <button id="nameOk" class="btn primary">Ajouter</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="renderer.js"></script>
+</body>
+</html>

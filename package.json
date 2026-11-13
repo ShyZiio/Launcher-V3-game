@@ -1,0 +1,21 @@
+{
+  "name": "mon-launcher",
+  "version": "1.0.0",
+  "description": "Tous mes jeux au même endroit",
+  "author": "moi",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.monlauncher.app",
+    "productName": "MonLauncher",
+    "files": ["main.js", "preload.js", "index.html", "style.css", "renderer.js"],
+    "win": { "target": "portable" },
+    "portable": { "artifactName": "MonLauncher.exe" }
+  }
+}
