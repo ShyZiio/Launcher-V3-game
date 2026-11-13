@@ -1,17 +1,26 @@
 const { app, BrowserWindow, ipcMain, shell, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { pathToFileURL } = require('url');
 const { spawn, execFileSync } = require('child_process');
 
 let win;
 const dataFile = () => path.join(app.getPath('userData'), 'games.json');
+const metaFile = () => path.join(app.getPath('userData'), 'meta.json');
 
-function loadGames() {
-  try { return JSON.parse(fs.readFileSync(dataFile(), 'utf8')); } catch { return []; }
+function readJson(file, fallback) {
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; }
 }
-function saveGames(games) {
-  fs.mkdirSync(path.dirname(dataFile()), { recursive: true });
-  fs.writeFileSync(dataFile(), JSON.stringify(games, null, 2));
+function writeJson(file, data) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(data, null, 2));
+}
+
+async function fileIcon(p) {
+  try {
+    const img = await app.getFileIcon(p, { size: 'large' });
+    return img.toDataURL();
+  } catch { return null; }
 }
 
 // ---------- Steam ----------
@@ -33,7 +42,7 @@ function scanSteam() {
       libs.add(path.join(m[1].replace(/\\\\/g, '\\'), 'steamapps'));
     }
   } catch {}
-  const out = [];
+  const byId = new Map();
   for (const lib of libs) {
     let files = [];
     try { files = fs.readdirSync(lib); } catch { continue; }
@@ -44,20 +53,15 @@ function scanSteam() {
         const id = t.match(/"appid"\s+"(\d+)"/)[1];
         const name = t.match(/"name"\s+"([^"]+)"/)[1];
         if (/Steamworks|Proton|Steam Linux Runtime/.test(name)) continue;
-        out.push({
-          name,
-          target: `steam://rungameid/${id}`,
-          type: 'Steam',
-          cover: `https://cdn.cloudflare.steamstatic.com/steam/apps/${id}/library_600x900.jpg`
-        });
+        if (!byId.has(id)) byId.set(id, { name, target: `steam://rungameid/${id}`, type: 'Steam' });
       } catch {}
     }
   }
-  return out;
+  return [...byId.values()];
 }
 
 // ---------- Epic ----------
-function scanEpic() {
+async function scanEpic() {
   const dir = 'C:\\ProgramData\\Epic\\EpicGamesLauncher\\Data\\Manifests';
   const out = [];
   let files = [];
@@ -66,10 +70,14 @@ function scanEpic() {
     if (!f.endsWith('.item')) continue;
     try {
       const d = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+      const exe = d.InstallLocation && d.LaunchExecutable ? path.join(d.InstallLocation, d.LaunchExecutable) : null;
+      const icon = exe && fs.existsSync(exe) ? await fileIcon(exe) : null;
       out.push({
         name: d.DisplayName,
         target: `com.epicgames.launcher://apps/${d.CatalogNamespace}%3A${d.CatalogItemId}%3A${d.AppName}?action=launch&silent=true`,
-        type: 'Epic'
+        type: 'Epic',
+        exe,
+        icon
       });
     } catch {}
   }
@@ -77,9 +85,9 @@ function scanEpic() {
 }
 
 // ---------- IPC ----------
-ipcMain.handle('games:get', () => loadGames());
-ipcMain.handle('games:save', (_, games) => { saveGames(games); return true; });
-ipcMain.handle('scan:all', () => [...scanSteam(), ...scanEpic()]);
+ipcMain.handle('games:get', () => readJson(dataFile(), []));
+ipcMain.handle('games:save', (_, games) => { writeJson(dataFile(), games); return true; });
+ipcMain.handle('scan:all', async () => [...scanSteam(), ...(await scanEpic())]);
 
 ipcMain.handle('game:launch', (_, g) => {
   try {
@@ -102,7 +110,16 @@ ipcMain.handle('pick:exe', async () => {
   });
   if (r.canceled) return null;
   const p = r.filePaths[0];
-  return { path: p, name: path.basename(p, path.extname(p)) };
+  return { path: p, name: path.basename(p, path.extname(p)), icon: await fileIcon(p) };
+});
+
+ipcMain.handle('pick:image', async () => {
+  const r = await dialog.showOpenDialog(win, {
+    filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif'] }],
+    properties: ['openFile']
+  });
+  if (r.canceled) return null;
+  return pathToFileURL(r.filePaths[0]).href;
 });
 
 ipcMain.handle('add:valorant', async () => {
@@ -116,18 +133,49 @@ ipcMain.handle('add:valorant', async () => {
     if (r.canceled) return null;
     p = r.filePaths[0];
   }
-  return { name: 'Valorant', target: p, type: 'Riot', args: '--launch-product=valorant --launch-patchline=live' };
+  return {
+    name: 'Valorant',
+    target: p,
+    type: 'Riot',
+    args: '--launch-product=valorant --launch-patchline=live',
+    icon: await fileIcon(p)
+  };
+});
+
+// Infos Steam (description, genre, développeur...) avec cache local
+ipcMain.handle('meta:get', async (_, appid) => {
+  const cache = readJson(metaFile(), {});
+  if (cache[appid]) return cache[appid];
+  try {
+    const r = await fetch(`https://store.steampowered.com/api/appdetails?appids=${appid}&l=french`);
+    const j = await r.json();
+    const d = j[appid];
+    if (!d || !d.success) return null;
+    const x = d.data;
+    const meta = {
+      description: x.short_description || '',
+      genres: (x.genres || []).map((g) => g.description),
+      developers: x.developers || [],
+      publishers: x.publishers || [],
+      release: (x.release_date && x.release_date.date) || ''
+    };
+    cache[appid] = meta;
+    writeJson(metaFile(), cache);
+    return meta;
+  } catch { return null; }
 });
 
 // ---------- fenêtre ----------
 function createWindow() {
   win = new BrowserWindow({
-    width: 1100,
-    height: 720,
-    minWidth: 640,
-    minHeight: 480,
+    width: 1280,
+    height: 780,
+    minWidth: 860,
+    minHeight: 520,
     backgroundColor: '#0b0d13',
     title: 'Mon Launcher',
+    titleBarStyle: 'hidden',
+    titleBarOverlay: { color: '#0b0d13', symbolColor: '#ffffff', height: 52 },
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
