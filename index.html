@@ -3,43 +3,104 @@
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://cdn.cloudflare.steamstatic.com">
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: file: https://cdn.cloudflare.steamstatic.com">
   <title>Mon Launcher</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="top">
-    <div class="brand">
-      <h1>Ma bibliothèque</h1>
-      <p id="count"></p>
-    </div>
-    <div class="tools">
-      <input id="search" type="text" placeholder="Rechercher un jeu…" autocomplete="off">
+  <div class="bg"><div id="bgImg" class="bg-img"></div></div>
+
+  <div class="app">
+    <header class="top">
+      <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ffb347"/>
+            <stop offset="1" stop-color="#ff3d6e"/>
+          </linearGradient>
+        </defs>
+        <path d="M13 12c-5 0-8 4-9.500 11-1.300 6-.5 11 3.500 11 2.700 0 4.500-2 6.500-5h14c2 3 3.800 5 6.500 5 4 0 4.800-5 3.500-11C35 16 32 12 27 12z"
+              transform="translate(2 2)" fill="url(#lg)"/>
+        <path d="M14 20h4v-3h4v3h4v4h-4v3h-4v-3h-4z" fill="#0b0d13" transform="translate(-1 0)"/>
+        <circle cx="35" cy="21" r="2.300" fill="#0b0d13"/>
+        <circle cx="31" cy="25" r="2.300" fill="#0b0d13"/>
+      </svg>
+
+      <div class="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.500" cy="10.500" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 15l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="search" type="text" placeholder="Rechercher un jeu…" autocomplete="off">
+      </div>
+
       <div class="dropdown">
-        <button id="addBtn" class="btn primary">+ Ajouter</button>
+        <button id="addBtn" class="sq" title="Ajouter des jeux">···</button>
         <div id="menu" class="menu hidden">
           <button id="miImport">Importer Steam et Epic</button>
           <button id="miValorant">Ajouter Valorant</button>
           <button id="miExe">Ajouter un jeu (.exe)</button>
         </div>
       </div>
+
+      <div class="dropdown">
+        <button id="filterBtn" class="sq accent" title="Filtrer par plateforme">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18l-7 8.500V20l-4-2v-5.500z" fill="currentColor"/></svg>
+        </button>
+        <div id="filterMenu" class="menu hidden"></div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside id="list" class="sidebar"></aside>
+
+      <main id="main" class="main">
+        <div class="hero-space"></div>
+
+        <section id="info" class="info">
+          <div class="title-block">
+            <img id="gLogo" class="g-logo hidden" alt="">
+            <h1 id="gTitle"></h1>
+          </div>
+
+          <div class="actions">
+            <button id="playBtn" class="play">Jouer</button>
+            <div class="dropdown">
+              <button id="moreBtn" class="more">Plus</button>
+              <div id="moreMenu" class="menu hidden">
+                <button id="miBg">Changer l'image de fond</button>
+                <button id="miIcon">Changer l'icône</button>
+                <button id="miReset">Réinitialiser les images</button>
+                <button id="miDelete" class="danger">Retirer de la bibliothèque</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="cols">
+            <div>
+              <h3>Détails</h3>
+              <table id="details"></table>
+            </div>
+            <div>
+              <h3>Description</h3>
+              <p id="gDesc" class="desc"></p>
+            </div>
+          </div>
+        </section>
+
+        <section id="emptyState" class="empty hidden">
+          <h2>Ta bibliothèque est vide</h2>
+          <p>Importe tes jeux Steam et Epic en un clic.</p>
+          <button id="emptyImport" class="play">Importer Steam et Epic</button>
+        </section>
+      </main>
     </div>
-  </header>
-
-  <nav id="filters" class="filters"></nav>
-
-  <main>
-    <section id="grid" class="grid"></section>
-    <section id="empty" class="empty hidden"></section>
-  </main>
+  </div>
 
   <div id="modal" class="modal hidden">
     <div class="box">
       <h2>Nom du jeu</h2>
       <input id="nameInput" type="text" autocomplete="off">
       <div class="row">
-        <button id="nameCancel" class="btn ghost">Annuler</button>
-        <button id="nameOk" class="btn primary">Ajouter</button>
+        <button id="nameCancel" class="more">Annuler</button>
+        <button id="nameOk" class="play">Ajouter</button>
       </div>
     </div>
   </div>
