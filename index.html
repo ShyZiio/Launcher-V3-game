@@ -31,9 +31,11 @@
       <div class="dropdown">
         <button id="addBtn" class="sq" title="Ajouter des jeux">···</button>
         <div id="menu" class="menu hidden">
-          <button id="miImport">Importer Steam et Epic</button>
+          <button id="miImport">Importer tous mes jeux</button>
           <button id="miValorant">Ajouter Valorant</button>
           <button id="miExe">Ajouter un jeu (.exe)</button>
+          <button id="miArt">Trouver les images manquantes</button>
+          <button id="miKey">Clé SteamGridDB (images auto)…</button>
         </div>
       </div>
 
@@ -84,8 +86,8 @@
 
         <section id="emptyState" class="empty hidden">
           <h2>Ta bibliothèque est vide</h2>
-          <p>Importe tes jeux Steam et Epic en un clic.</p>
-          <button id="emptyImport" class="play">Importer Steam et Epic</button>
+          <p>Steam, Epic, EA, Ubisoft, GOG, Riot et plus : en un clic.</p>
+          <button id="emptyImport" class="play">Importer tous mes jeux</button>
         </section>
       </main>
     </div>
@@ -98,6 +100,18 @@
       <div class="row">
         <button id="nameCancel" class="more">Annuler</button>
         <button id="nameOk" class="play">Ajouter</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="keyModal" class="modal hidden">
+    <div class="box">
+      <h2>Images automatiques</h2>
+      <p class="hint">Pour récupérer les fonds et logos de tous tes jeux (Valorant, Genshin…), colle ta clé gratuite SteamGridDB. Tu la crées sur steamgriddb.com : connexion, puis Préférences, puis API.</p>
+      <input id="keyInput" type="password" placeholder="Clé API SteamGridDB" autocomplete="off">
+      <div class="row">
+        <button id="keyCancel" class="more">Annuler</button>
+        <button id="keyOk" class="play">Enregistrer</button>
       </div>
     </div>
   </div>
